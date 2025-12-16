@@ -62,7 +62,6 @@ func main() {
 
 	contents := string(data)
 	lines := strings.Split(contents, "\n")
-	fmt.Println("Hello World", len(lines))
 
 	idRanges := []idSet{}
 	idsToCheck := []int64{}
