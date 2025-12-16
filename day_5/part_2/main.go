@@ -22,6 +22,24 @@ func check(e error) {
 	}
 }
 
+func checkOverlap(set1 idSet, set2 idSet) bool {
+	// this seems pretty verbose, but all of these are required
+	// if set2 is a superset of set1 the last 2 if statements catch it.
+	if set2.min >= set1.min && set2.min <= set1.max {
+		return true
+	}
+	if set2.max >= set1.min && set2.max <= set1.max {
+		return true
+	}
+	if set1.min >= set2.min && set1.min <= set2.max {
+		return true
+	}
+	if set1.max >= set2.min && set1.max <= set2.max {
+		return true
+	}
+	return false
+}
+
 func mergeOverlappingSets(idRanges []idSet) []idSet {
 
 	mergedRanges := []idSet{}
@@ -45,13 +63,14 @@ func mergeOverlappingSets(idRanges []idSet) []idSet {
 				continue
 			}
 			r2 := idRanges[c]
-			if (r2.min >= r1.min && r2.min <= r1.max) || (r2.max >= r1.min && r2.max <= r1.max) {
+			if checkOverlap(r1, r2) {
 				r1 = idSet{
-					max: max(r1.max, r2.max),
 					min: min(r1.min, r2.min),
+					max: max(r1.max, r2.max),
 				}
 				mergedRanges[len(mergedRanges)-1] = r1
 				indexesAlreadyMerged = append(indexesAlreadyMerged, c)
+				// the change to the current range might change the overlap status of previous id ranges
 				c = 0
 			}
 			c += 1
@@ -65,7 +84,7 @@ func main() {
 	wdir, err := os.Getwd()
 	check(err)
 
-	path := filepath.Join(wdir, "self_test.txt")
+	path := filepath.Join(wdir, "input.txt")
 	data, err := os.ReadFile(path) // input.txt is < 1kb so you can read all into memory
 	check(err)
 
@@ -76,7 +95,7 @@ func main() {
 
 	for i, l := range lines {
 		if len(l) == 0 {
-			continue
+			break
 		}
 		if strings.Contains(l, "-") {
 			ids := strings.Split(l, "-")
@@ -101,7 +120,10 @@ func main() {
 	for _, r := range idRangesWithoutOverlap {
 		fmt.Println(r.min, r.max)
 		valuesInRange := (r.max - r.min) + 1 // count is inclusive (fence posts not boards)
+
+		fmt.Println("Range for Id Set (post Merge):", r.min, " - ", r.max)
 		totalUniqueValuesInAllRanges += int(valuesInRange)
+		fmt.Println("Num Ids in Range: ", valuesInRange)
 	}
 
 	fmt.Printf("Found %d items considered fresh by id ranges\n", totalUniqueValuesInAllRanges)
